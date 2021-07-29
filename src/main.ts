@@ -1,9 +1,12 @@
-import App from './App.svelte';
+import CryptoWidget from './App.svelte';
 
 
-const app = new App({
+const app = new CryptoWidget({
 	target: document.body,
 	props: {
+		backgroundColor: "black",
+        textColor: "yellow",
+        scroll: true,
 		coins: [
 			{
 				label: "Bitcoin",
