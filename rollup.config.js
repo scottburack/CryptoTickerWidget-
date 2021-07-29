@@ -33,9 +33,9 @@ function serve() {
 export default {
 	input: 'src/main.ts',
 	output: {
-		sourcemap: true,
+		sourcemap: false,
 		format: 'iife',
-		name: 'app',
+		name: 'CryptoWidget',
 		file: 'public/build/bundle.js'
 	},
 	plugins: [
@@ -61,7 +61,7 @@ export default {
 		}),
 		commonjs(),
 		typescript({
-			sourceMap: !production,
+			sourceMap: false,
 			inlineSources: !production
 		}),
 

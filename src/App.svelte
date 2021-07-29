@@ -1,73 +1,112 @@
 <script lang="ts">
-	import {onDestroy, onMount} from 'svelte'
-//   https://api.coingecko.com/api/v3/simple/price?ids=bitcoin%2Cethereum&vs_currencies=usd
-// 	"ethereum": {
-//     "usd": 2303.36
-//   },
+	import { onMount, onDestroy } from "svelte";
+	export let coins: Coin[] | null = null;
+	export let backgroundColor: string = "dodgerblue";
+	export let textColor: string = "white";
+	export let scroll: boolean = true;
 
-let values = FormattedCoin[] | null = null;
-let interval = null; 
+	let values: FormattedCoin[] | null = null;
+	let interval = null;
 
-onMount(()=> {
-	interval = setInterval(() => {
-		fetchData().then(data => {
-		  values = data
-		)}
-	}, 2000)
-})
+	function formattedCurrency(value: number) {
+	  return new Intl.NumberFormat("en-US", {
+		style: "currency",
+		currency: "USD",
+	  }).format(value);
+	}
 
-onDestroy(() => {
-  clearInterval(interval)
-})
+	function handleFetch() {
+	  fetchData().then((data) => {
+		values = data;
+	  });
+	}
 
-$: {
-	console.log(values)
-}
+	onMount(() => {
+	  handleFetch();
+	  interval = setInterval(() => {
+		handleFetch();
+	  }, 5000);
+	});
+
+	onDestroy(() => {
+	  // stop interval
+	  clearInterval(interval);
+	});
 
 	type Coin = {
-		label: string;
-		id: string;
-	}
+	  label: string;
+	  id: string;
+	};
 
 	interface FormattedCoin extends Omit<Coin, "id"> {
-		value: number;
+	  value: number;
 	}
-
-	export let coins : Coin[] | null = null;
 
 	async function fetchData() {
-		const idQueryString = coins.reduce((acc, value) =>{
-			return acc + value.id + "%2C"
-		} , "")
+		
+	  const idQueryString = coins.reduce((accumulator, value) => {
+		return accumulator + value.id + "%2C";
+	  }, "");
 
-		const url = `https://api.coingecko.com/api/v3/simple/price?ids=${idQueryString}&vs_currencies=usd`
+	  const url = `https://api.coingecko.com/api/v3/simple/price?ids=${idQueryString}&vs_currencies=usd`;
+	  const response = await fetch(url);
+	  const data = (await response.json()) as Record<string, { usd: number }>;
 
-		const resp = await fetch(url);
-		const data = (await resp.json()) as Record<string, { usd: number }>;
+	  const formattedData = coins.map((coin) => {
+		return {
+		  label: coin.label,
+		  value: data[coin.id].usd,
+		};
+	  });
 
-		const formattedData = coins.map(coin => {
-			return {
-				label: coin.label,
-				value: data[coin.id].usd
-			}
-		})
-
-		return formattedData
+	  return formattedData;
 	}
-
-</script>
-
-
-
-<div>
+  </script>
+  
+  <div
+	class="wrapper"
+	style={`background-color: ${backgroundColor}; color: ${textColor}`}
+  >
 	{#if !values}
 	  <div>No data</div>
 	{:else}
-	  <div>
-		  {#each values as value}
-		    <div>{value.label}: {value.value}</div>
-		  {/each}
-	  </div>
+	  <article class={`result ${scroll ? "animation" : ""}`}>
+		{#each values as value}
+		  <p>{value.label} {formattedCurrency(value.value)}</p>
+		{/each}
+	  </article>
 	{/if}
-</div>
-
+  </div>
+  
+  <style>
+	.wrapper {
+	  padding: 10px;
+	  display: flex;
+	  overflow: hidden;
+	  align-items: center;
+	  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+		Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+	}
+	.result {
+	  display: inline-flex;
+	  align-items: center;
+	  gap: 10px;
+	}
+	p {
+	  padding: 0;
+	  margin: 0;
+	}
+	.animation {
+	  white-space: none;
+	  animation: floatText 15s infinite linear;
+	  padding-left: 100%;
+	}
+	.animation:hover {
+	  animation-play-state: paused;
+	}
+	@keyframes floatText {
+	  to {
+		transform: translateX(-100%);
+	  }
+	}
+  </style>

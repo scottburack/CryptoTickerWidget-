@@ -13,6 +13,10 @@ const app = new App({
 				label: "Ethereum",
 				id: "ethereum", // CoinGecko Api
 			},
+			{
+				label: "Dogecoin",
+				id: "dogecoin",
+			}
 		]
 	}
 });
